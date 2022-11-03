@@ -1,14 +1,26 @@
 package com.example.demo;
 
-import com.sun.javafx.collections.MappingChange;
+import com.example.demo.util.RedisUtils;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @SpringBootTest
 class DemoApplicationTests {
+
+    @Autowired
+    private RedisUtils redisUtils;
+
 
     @Test
     void contextLoads() {
@@ -38,6 +50,17 @@ class DemoApplicationTests {
         List<Integer> collect = map.keySet().stream().sorted(Integer::compareTo).collect(Collectors.toList());
         System.out.println(collect.get(0));
         System.out.println(k);
+    }
+
+
+    @Test
+    public void test02(){
+        BlockingQueue workQueue = new SynchronousQueue<Runnable>();
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(100, 150, 20, TimeUnit.SECONDS,workQueue);
+        for (int i = 0; i < 100; i++) {
+           executor.execute(() -> redisUtils.tryLock("lock-key",30));
+        }
+
     }
 
 }

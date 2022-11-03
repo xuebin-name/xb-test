@@ -7,11 +7,12 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
-import io.netty.handler.codec.bytes.ByteArrayDecoder;
-import io.netty.handler.codec.bytes.ByteArrayEncoder;
+import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -42,7 +43,7 @@ public class NettyConfig {
     }
 
 
-    //@Value("${netty.server.port}")
+    @Value("${netty.server.port}")
     private int port=9001;
 
     public int getPort() {
@@ -68,11 +69,11 @@ public class NettyConfig {
             e.printStackTrace();
         }
     }
-
+    //启动服务端netty 服务
     public void startServer(){
         logger.info("netty server -----------> start!");
-        EventLoopGroup bossGroup = new NioEventLoopGroup(0,poolExecutor);
-        EventLoopGroup workerGroup = new NioEventLoopGroup(0,poolExecutor);
+        EventLoopGroup bossGroup = new NioEventLoopGroup(0,poolExecutor); //主线程组
+        EventLoopGroup workerGroup = new NioEventLoopGroup(0,poolExecutor);//工作线程组
         logger.info("connect is already ---------->start!");
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
@@ -80,12 +81,13 @@ public class NettyConfig {
             bootstrap.group(bossGroup,workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .localAddress(new InetSocketAddress(port))
+
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel channel) throws Exception {
                             ChannelPipeline pipeline = channel.pipeline();
-                            pipeline.addLast("decoder",new ByteArrayDecoder());
-                            pipeline.addLast("encoder",new ByteArrayEncoder());
+                            pipeline.addLast("decoder",new StringDecoder());
+                            pipeline.addLast("encoder",new StringEncoder());
                             //添加分隔符解码器
                             pipeline.addLast(new DelimiterBasedFrameDecoder(1024*2, Unpooled.copiedBuffer("\r\n\r\n".getBytes())));
                             //心跳检测
